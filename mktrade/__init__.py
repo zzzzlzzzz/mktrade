@@ -16,7 +16,7 @@ def create_application() -> Flask:
     app = Flask(__name__, instance_relative_config=True)
     db_file = path.join(app.instance_path, 'mktrade.sqlite')
     app.config.from_mapping(SECRET_KEY='dev',
-                            SQLALCHEMY_DATABASE_URI=f'sqlite:///{db_file}',
+                            SQLALCHEMY_DATABASE_URI='sqlite:///{0}'.format(db_file),
                             SQLALCHEMY_TRACK_MODIFICATIONS=False,
                             CSRF_FORM_NAME='csrf_token',
                             CSRF_SESSION_NAME='csrf_token')
