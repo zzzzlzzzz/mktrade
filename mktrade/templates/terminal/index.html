@@ -25,8 +25,9 @@
 </select>
 
 {% if current_symbol %}
-<div>
-    <div style="float:left; margin-right: 10px;">
+<div style="display:table-row;width:auto;">
+    <div style="float:left;display:table-column;margin-right: 10px;" id="balances"></div>
+    <div style="float:left;display:table-column;margin-right: 10px;">
         <form method="post" action="{{ url_for('terminal.index_by_id', account_id=current_account.account_id, symbol=current_symbol) }}">
             Amount<br/>
             <input name="amount" value="{% if request.form.get('act') == 'sell' %}{{ request.form.get('amount', 0) }}{% else %}0{% endif %}"/><br/>
@@ -41,7 +42,7 @@
             <input type="submit" value="Sell"/>
         </form>
     </div>
-    <div>
+    <div style="float:left;display:table-column;margin-right: 10px;">
         <form method="post" action="{{ url_for('terminal.index_by_id', account_id=current_account.account_id, symbol=current_symbol) }}">
             Amount<br/>
             <input name="amount" value="{% if request.form.get('act') == 'buy' %}{{ request.form.get('amount', 0) }}{% else %}0{% endif %}"/><br/>
@@ -57,5 +58,12 @@
         </form>
     </div>
 </div>
+<script>
+    function update_statistics() {
+        $("#balances").load('{{ url_for('terminal.balance', account_id=current_account.account_id) }}');
+    }
+    update_statistics();
+    window.setInterval(update_statistics, {{ update_interval }});
+</script>
 {% endif %}
 {% endblock %}

@@ -93,4 +93,22 @@ def index_by_id(account_id, symbol=None):
                 flash('Mode invalid')
         else:
             flash('Action incorrect')
-    return render_template('terminal/index.html', accounts=accounts, current_account=current_account, symbols=client.symbols, current_symbol=symbol)
+    return render_template('terminal/index.html', accounts=accounts, current_account=current_account, symbols=client.symbols, current_symbol=symbol, update_interval=current_account.exchange_timeout)
+
+
+@bp.route('/balance/<int:account_id>', methods=('GET', ))
+def balance(account_id):
+    current_account = None
+    try:
+        current_account = Account.query.filter_by(account_id=account_id).one()
+    except (NoResultFound, MultipleResultsFound):
+        abort(404)
+
+    client = current_account.get_client(session['password'])
+    balances = None
+    try:
+        balances = {name: amount for name, amount in client.fetch_balance().get('total', {}).items() if amount > 0}
+    except BaseError:
+        abort(503)
+
+    return render_template('terminal/balance.html', balances=balances)

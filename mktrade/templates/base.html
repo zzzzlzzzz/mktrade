@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>{% block title %}{% endblock %}</title>
+    <script type=text/javascript src="{{ url_for('static', filename='jquery-3.3.1.min.js') }}"></script>
 </head>
 <body>
     {% with messages = get_flashed_messages() %}
