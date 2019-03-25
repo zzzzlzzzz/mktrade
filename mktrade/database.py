@@ -1,4 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
+import ccxt
+from .encryption import Encryption
 
 
 db = SQLAlchemy()
@@ -27,3 +29,35 @@ class Account(db.Model):
         self.password = password
         self.exchange_timeout = timeout
         self.nonce_as_time = nonceast
+
+    def get_client(self, password):
+        """
+        Выполняет получение клиента из данных аутентификации
+
+        :param password: Пароль для защиты
+        :return: Клиент криптобиржи
+        """
+
+        def nonce():
+            if self.nonce_as_time:
+                return ccxt.Exchange.milliseconds()
+            last_nonce = self.nonce
+            self.nonce = Account.nonce + 1
+            db.session.commit()
+            return last_nonce
+
+        client_cls = getattr(ccxt, self.exchange_id, None)
+        if not client_cls:
+            return None
+
+        cipher = Encryption(password)
+        client_settings = {'timeout': self.exchange_timeout,
+                           'apiKey': cipher.decrypt(self.api_key),
+                           'secret': cipher.decrypt(self.api_secret),
+                           'nonce': nonce}
+        if self.password:
+            client_settings.update({'password': cipher.decrypt(self.password)})
+        if self.uid:
+            client_settings.update({'uid': cipher.decrypt(self.uid)})
+
+        return client_cls(client_settings)

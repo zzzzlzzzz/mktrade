@@ -4,7 +4,7 @@ from contextlib import suppress
 from flask import Flask, request, session, abort
 from werkzeug.security import safe_str_cmp
 from .database import db
-from . import keystore
+from . import keystore, terminal
 
 
 def create_application() -> Flask:
@@ -32,6 +32,7 @@ def create_application() -> Flask:
         db.create_all(app=app)
 
     app.register_blueprint(keystore.bp)
+    app.register_blueprint(terminal.bp)
     app.add_url_rule('/', endpoint='keystore.auth')
 
     @app.context_processor

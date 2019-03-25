@@ -1,11 +1,10 @@
 from functools import wraps
 from hashlib import md5
-from base64 import b64encode, b64decode
 from flask import Blueprint, request, render_template, session, url_for, redirect, flash, abort
 from ccxt import exchanges
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
-from des import DesKey
 from .database import db, Account
+from .encryption import Encryption
 
 
 bp = Blueprint('keystore', __name__, url_prefix='/keystore')
@@ -24,7 +23,7 @@ def auth():
             flash('Password length less that 10 symbols')
         else:
             session['password'] = md5(password.encode('utf8')).hexdigest()[4:28]
-            return redirect(url_for('keystore.keys'))
+            return redirect(url_for('terminal.index'))
     return render_template('keystore/auth.html')
 
 
@@ -70,14 +69,11 @@ def keys_process(to_update=None):
     elif nonce_as_time is None:
         flash('Enter correct nonce as time')
     else:
-        cipher = DesKey(session['password'].encode('utf8'))
-
-        def do_cipher(msg):
-            return b64encode(cipher.encrypt(msg.encode('utf8'), padding=True)).decode('utf8')
-        api_key = do_cipher(api_key)
-        api_secret = do_cipher(api_secret)
-        uid = do_cipher(uid)
-        password = do_cipher(password)
+        cipher = Encryption(session['password'])
+        api_key = cipher.encrypt(api_key)
+        api_secret = cipher.encrypt(api_secret)
+        uid = cipher.encrypt(uid)
+        password = cipher.encrypt(password)
 
         if to_update:
             to_update.account_tag = tag
@@ -136,18 +132,16 @@ def keys_by_id(key_id):
         else:
             abort(404)
 
-    cipher = DesKey(session['password'].encode('utf8'))
+    cipher = Encryption(session['password'])
 
-    def do_cipher(msg):
-        return cipher.decrypt(b64decode(msg.encode('utf8')), padding=True).decode('utf8')
     current_account_encoded = {
         'account_id': current_account.account_id,
         'account_tag': current_account.account_tag,
         'exchange_id': current_account.exchange_id,
-        'api_key': do_cipher(current_account.api_key),
-        'api_secret': do_cipher(current_account.api_secret),
-        'uid': do_cipher(current_account.uid),
-        'password': do_cipher(current_account.password),
+        'api_key': cipher.decrypt(current_account.api_key),
+        'api_secret': cipher.decrypt(current_account.api_secret),
+        'uid': cipher.decrypt(current_account.uid),
+        'password': cipher.decrypt(current_account.password),
         'exchange_timeout': current_account.exchange_timeout,
         'nonce_as_time': current_account.nonce_as_time
     }
