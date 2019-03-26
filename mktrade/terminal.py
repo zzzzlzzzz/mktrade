@@ -112,3 +112,38 @@ def balance(account_id):
         abort(503)
 
     return render_template('terminal/balance.html', balances=balances)
+
+
+@bp.route('/orders/<int:account_id>/<path:symbol>', methods=('GET', ))
+def orders(account_id, symbol):
+    current_account = None
+    try:
+        current_account = Account.query.filter_by(account_id=account_id).one()
+    except (NoResultFound, MultipleResultsFound):
+        abort(404)
+
+    client = current_account.get_client(session['password'])
+    open_orders = None
+    try:
+        open_orders = client.fetch_open_orders(symbol)
+    except BaseError:
+        abort(503)
+    return render_template('terminal/orders.html', open_orders=open_orders, current_account=current_account, current_symbol=symbol)
+
+
+@bp.route('/cancel/<int:account_id>/<path:symbol>', methods=('POST', ))
+def cancel(account_id, symbol):
+    order_id = request.form.get('order_id')
+
+    current_account = None
+    try:
+        current_account = Account.query.filter_by(account_id=account_id).one()
+    except (NoResultFound, MultipleResultsFound):
+        abort(404)
+
+    client = current_account.get_client(session['password'])
+    try:
+        client.cancel_order(order_id, symbol)
+    except BaseError:
+        abort(503)
+    return redirect(url_for('terminal.index_by_id', account_id=account_id, symbol=symbol))
