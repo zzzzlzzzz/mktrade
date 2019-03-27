@@ -203,5 +203,5 @@ def create(account_id, symbol):
         else:
             return render_template('terminal/error-msg.html', message='Invalid order type')
     else:
-        return render_template('terminat/error-msg.html', message='Action invalid')
+        return render_template('terminal/error-msg.html', message='Action invalid')
     return render_template('terminal/ok-msg.html', message='Successfully created')
