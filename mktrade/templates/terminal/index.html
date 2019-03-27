@@ -49,12 +49,12 @@
     <div class="col sm-4">
         <div class="card dashboard background-danger">
             <div class="card-body">
-                <form method="post" action="{{ url_for('terminal.index_by_id', account_id=current_account.account_id, symbol=current_symbol) }}">
+                <form method="post" id="form-sell" action="{{ url_for('terminal.create', account_id=current_account.account_id, symbol=current_symbol) }}">
                     <div class="row">
                         <div class="col-12">
                             <div class="form-group">
                                 <label for="sell-amount">Amount</label>
-                                <input name="amount" id="sell-amount" class="input-block" value="{% if request.form.get('act') == 'sell' %}{{ request.form.get('amount', 0) }}{% else %}0{% endif %}"/>
+                                <input name="amount" id="sell-amount" class="input-block" value="0"/>
                             </div>
                         </div>
                     </div>
@@ -62,8 +62,8 @@
                         <div class="col-12">
                             <div class="form-group">
                                 <select name="mode" class="input-block">
-                                    <option value="market"{% if request.form.get('act') == 'sell' and request.form.get('mode') == 'market' %} selected{% endif %}>Market</option>
-                                    <option value="limit"{% if request.form.get('act') == 'sell' and request.form.get('mode') == 'limit' %} selected{% endif %}>Limit</option>
+                                    <option value="market">Market</option>
+                                    <option value="limit">Limit</option>
                                 </select>
                             </div>
                         </div>
@@ -72,7 +72,7 @@
                         <div class="col-12">
                             <div class="form-group">
                                 <label for="sell-price">Price</label>
-                                <input name="price" id="sell-price" class="input-block" value="{% if request.form.get('act') == 'sell' %}{{ request.form.get('price', 0) }}{% else %}0{% endif %}"/>
+                                <input name="price" id="sell-price" class="input-block" value="0"/>
                             </div>
                         </div>
                     </div>
@@ -92,12 +92,12 @@
     <div class="col sm-4">
         <div class="card dashboard background-success">
             <div class="card-body">
-                <form method="post" action="{{ url_for('terminal.index_by_id', account_id=current_account.account_id, symbol=current_symbol) }}">
+                <form method="post" id="form-buy" action="{{ url_for('terminal.create', account_id=current_account.account_id, symbol=current_symbol) }}">
                     <div class="row">
                         <div class="col-12">
                             <div class="form-group">
                                 <label for="buy-amount">Amount</label>
-                                <input name="amount" id="buy-amount" class="input-block" value="{% if request.form.get('act') == 'buy' %}{{ request.form.get('amount', 0) }}{% else %}0{% endif %}"/>
+                                <input name="amount" id="buy-amount" class="input-block" value="0"/>
                             </div>
                         </div>
                     </div>
@@ -105,8 +105,8 @@
                         <div class="col-12">
                             <div class="form-group">
                                 <select name="mode" class="input-block">
-                                    <option value="market"{% if request.form.get('act') == 'buy' and request.form.get('mode') == 'market' %} selected{% endif %}>Market</option>
-                                    <option value="limit"{% if request.form.get('act') == 'buy' and request.form.get('mode') == 'limit' %} selected{% endif %}>Limit</option>
+                                    <option value="market">Market</option>
+                                    <option value="limit">Limit</option>
                                 </select>
                             </div>
                         </div>
@@ -115,7 +115,7 @@
                         <div class="col-12">
                             <div class="form-group">
                                 <label for="buy-price">Price</label>
-                                <input name="price" id="buy-price" class="input-block" value="{% if request.form.get('act') == 'buy' %}{{ request.form.get('price', 0) }}{% else %}0{% endif %}">
+                                <input name="price" id="buy-price" class="input-block" value="0">
                             </div>
                         </div>
                     </div>
@@ -135,12 +135,50 @@
 </div>
 
 <script>
-    function update_statistics() {
-        $("#balances").load('{{ url_for('terminal.balance', account_id=current_account.account_id) }}');
-        $("#open-orders").load('{{ url_for('terminal.orders', account_id=current_account.account_id, symbol=current_symbol) }}');
-    }
-    update_statistics();
-    window.setInterval(update_statistics, {{ update_interval }});
+    $(document).ready(function () {
+        function update_statistics() {
+            $("#balances").load('{{ url_for('terminal.balance', account_id=current_account.account_id) }}');
+            $("#open-orders").load('{{ url_for('terminal.orders', account_id=current_account.account_id, symbol=current_symbol) }}');
+        }
+        update_statistics();
+        window.setInterval(update_statistics, {{ update_interval }});
+
+        $('#form-sell').submit(function (e) {
+            e.preventDefault();
+            var $form = $(this);
+            $.ajax({
+                timeout: 10000,
+                type: $form.attr('method'),
+                url: $form.attr('action'),
+                data: $form.serialize(),
+                success: function (msg) {
+                    $(msg).appendTo('#error-panel').delay(1000).fadeOut(1000, function () { $(this).remove(); });
+                    update_statistics();
+                },
+                error: function (jqXHR, text) {
+                    $('<div class="alert alert-danger"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i>AJAX Error</div>').appendTo('#error-panel').delay(1000).fadeOut(1000, function () { $(this).remove(); });
+                }
+            });
+        });
+
+        $('#form-buy').submit(function (e) {
+            e.preventDefault();
+            var $form = $(this);
+            $.ajax({
+                timeout: 10000,
+                type: $form.attr('method'),
+                url: $form.attr('action'),
+                data: $form.serialize(),
+                success: function (msg) {
+                    $(msg).appendTo('#error-panel').delay(1000).fadeOut(1000, function () { $(this).remove(); });
+                    update_statistics();
+                },
+                error: function (jqXHR, text) {
+                    $('<div class="alert alert-danger"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i>AJAX Error</div>').appendTo('#error-panel').delay(1000).fadeOut(1000, function () { $(this).remove(); });
+                }
+            });
+        });
+    });
 </script>
 {% endif %}
 {% endblock %}

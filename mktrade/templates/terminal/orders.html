@@ -10,19 +10,40 @@
     </thead>
     <tbody>
     {% for order in open_orders %}
-        <tr>
+        <tr id="row-order-{{ order['id'] }}">
             <td>{{ order['id'] }}</td>
             <td>{{ order['side'] }}</td>
             <td>{{ order['price'] }}</td>
             <td>{{ order['amount'] }}</td>
             <td>
-                <form method="post" action="{{ url_for('terminal.cancel', account_id=current_account.account_id, symbol=current_symbol) }}">
-                    <button type="submit" class="btn-warning btn-block">Cancel</button>
+                <form id="form-cancel-{{ order['id'] }}" method="post" action="{{ url_for('terminal.cancel', account_id=current_account.account_id, symbol=current_symbol) }}">
+                    <button class="btn-warning btn-block" id="cancel-{{ order['id'] }}">Cancel</button>
                     <input type="hidden" name="order_id" value="{{ order['id'] }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}"/>
                 </form>
             </td>
         </tr>
+        <script>
+            $(document).ready(function () {
+                $('#form-cancel-{{ order['id'] }}').submit(function (e) {
+                    e.preventDefault();
+                    var $form = $(this);
+                    $.ajax({
+                        timeout: 10000,
+                        type: $form.attr('method'),
+                        url: $form.attr('action'),
+                        data: $form.serialize(),
+                        success: function (msg) {
+                            $(msg).appendTo('#error-panel').delay(1000).fadeOut(1000, function () { $(this).remove(); });
+                            $('#row-order-{{ order['id'] }}').remove();
+                        },
+                        error: function (jqXHR, text) {
+                            $('<div class="alert alert-danger"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i>AJAX Error</div>').appendTo('#error-panel').delay(1000).fadeOut(1000, function () { $(this).remove(); });
+                        }
+                    });
+                });
+            })
+        </script>
     {% endfor %}
     </tbody>
 </table>
