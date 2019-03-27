@@ -1,68 +1,143 @@
 {% extends "base.html" %}
 
-{% block title %}Terminal{% endblock %}
+{% set title = "Terminal" %}
+{% set active_page = "terminal" %}
 
 {% block content %}
-<script>
-    function account_change(val) {
-        if (val) {
-            window.location.href = val
-        }
-    }
-</script>
-
-<select onchange="account_change(this.value);">
-    <option value="{{ url_for('keystore.keys') }}">To key storage</option>
-    {% for account in accounts %}
-    <option value="{{ url_for('terminal.index_by_id', account_id=account.account_id) }}"{% if current_account.account_id == account.account_id %} selected{% endif %}>{{account.account_id}} - {{account.account_tag}}</option>
-    {% endfor %}
-</select>
-<select onchange="account_change(this.value);">
-    <option value=""{%if not current_symbol %} selected{% endif %}>Trading pair</option>
-    {% for symbol in symbols %}
-    <option value="{{ url_for('terminal.index_by_id', account_id=current_account.account_id, symbol=symbol) }}"{% if current_symbol and current_symbol == symbol %} selected{% endif %}>{{ symbol }}</option>
-    {% endfor %}
-</select>
-
-{% if current_symbol %}
-<div style="display:table-row;width:auto;">
-    <div style="float:left;display:table-column;margin-right: 10px;" id="balances"></div>
-    <div style="float:left;display:table-column;margin-right: 10px;">
-        <form method="post" action="{{ url_for('terminal.index_by_id', account_id=current_account.account_id, symbol=current_symbol) }}">
-            Amount<br/>
-            <input name="amount" value="{% if request.form.get('act') == 'sell' %}{{ request.form.get('amount', 0) }}{% else %}0{% endif %}"/><br/>
-            <select name="mode">
-                <option value="market"{% if request.form.get('act') == 'sell' and request.form.get('mode') == 'market' %} selected{% endif %}>Market</option>
-                <option value="limit"{% if request.form.get('act') == 'sell' and request.form.get('mode') == 'limit' %} selected{% endif %}>Limit</option>
-            </select><br/>
-            Price<br/>
-            <input name="price" value="{% if request.form.get('act') == 'sell' %}{{ request.form.get('price', 0) }}{% else %}0{% endif %}"><br/>
-            <input name="act" type="hidden" value="sell"/>
-            <input name="csrf_token" type="hidden" value="{{ csrf_token }}"/>
-            <input type="submit" value="Sell"/>
-        </form>
+<div class="row">
+    <div class="col sm-4">
+        <div class="form-group">
+            <select onchange="select_as_link(this.value);" class="input-block">
+                <option value="{{ url_for('keystore.keys') }}">To key storage</option>
+                {% for account in accounts %}
+                <option value="{{ url_for('terminal.index_by_id', account_id=account.account_id) }}"{% if current_account.account_id == account.account_id %} selected{% endif %}>{{account.account_id}} - {{account.account_tag}}</option>
+                {% endfor %}
+            </select>
+        </div>
     </div>
-    <div style="float:left;display:table-column;margin-right: 10px;">
-        <form method="post" action="{{ url_for('terminal.index_by_id', account_id=current_account.account_id, symbol=current_symbol) }}">
-            Amount<br/>
-            <input name="amount" value="{% if request.form.get('act') == 'buy' %}{{ request.form.get('amount', 0) }}{% else %}0{% endif %}"/><br/>
-            <select name="mode">
-                <option value="market"{% if request.form.get('act') == 'buy' and request.form.get('mode') == 'market' %} selected{% endif %}>Market</option>
-                <option value="limit"{% if request.form.get('act') == 'buy' and request.form.get('mode') == 'limit' %} selected{% endif %}>Limit</option>
-            </select><br/>
-            Price<br/>
-            <input name="price" value="{% if request.form.get('act') == 'buy' %}{{ request.form.get('price', 0) }}{% else %}0{% endif %}"><br/>
-            <input name="act" type="hidden" value="buy"/>
-            <input name="csrf_token" type="hidden" value="{{ csrf_token }}"/>
-            <input type="submit" value="Buy">
-        </form>
+    <div class="col sm-4">
+        <div class="form-group">
+            <select onchange="select_as_link(this.value);" class="input-block">
+                <option value=""{%if not current_symbol %} selected{% endif %}>Trading pair</option>
+                {% for symbol in symbols %}
+                <option value="{{ url_for('terminal.index_by_id', account_id=current_account.account_id, symbol=symbol) }}"{% if current_symbol and current_symbol == symbol %} selected{% endif %}>{{ symbol }}</option>
+                {% endfor %}
+            </select>
+        </div>
     </div>
 </div>
-<div style="display:table-row;width:auto;" id="open_orders"></div>
+{% if current_symbol %}
+<div class="row">
+    <div class="col sm-12">
+        <div class="card notification">
+            <div class="card-header">
+                <i class="fa fa-gavel" aria-hidden="true"></i> Open Orders
+            </div>
+            <div class="card-body" id="open-orders"></div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col sm-4">
+        <div class="card notification">
+            <div class="card-header">
+                <i class="fa fa-info" aria-hidden="true"></i> Balances
+            </div>
+            <div class="card-body" id="balances"></div>
+        </div>
+    </div>
+    <div class="col sm-4">
+        <div class="card dashboard background-danger">
+            <div class="card-body">
+                <form method="post" action="{{ url_for('terminal.index_by_id', account_id=current_account.account_id, symbol=current_symbol) }}">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="sell-amount">Amount</label>
+                                <input name="amount" id="sell-amount" class="input-block" value="{% if request.form.get('act') == 'sell' %}{{ request.form.get('amount', 0) }}{% else %}0{% endif %}"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <select name="mode" class="input-block">
+                                    <option value="market"{% if request.form.get('act') == 'sell' and request.form.get('mode') == 'market' %} selected{% endif %}>Market</option>
+                                    <option value="limit"{% if request.form.get('act') == 'sell' and request.form.get('mode') == 'limit' %} selected{% endif %}>Limit</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="sell-price">Price</label>
+                                <input name="price" id="sell-price" class="input-block" value="{% if request.form.get('act') == 'sell' %}{{ request.form.get('price', 0) }}{% else %}0{% endif %}"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <button type="submit" class="btn-block btn-warning">Sell</button>
+                            </div>
+                        </div>
+                    </div>
+                    <input name="act" type="hidden" value="sell"/>
+                    <input name="csrf_token" type="hidden" value="{{ csrf_token }}"/>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col sm-4">
+        <div class="card dashboard background-success">
+            <div class="card-body">
+                <form method="post" action="{{ url_for('terminal.index_by_id', account_id=current_account.account_id, symbol=current_symbol) }}">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="buy-amount">Amount</label>
+                                <input name="amount" id="buy-amount" class="input-block" value="{% if request.form.get('act') == 'buy' %}{{ request.form.get('amount', 0) }}{% else %}0{% endif %}"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <select name="mode" class="input-block">
+                                    <option value="market"{% if request.form.get('act') == 'buy' and request.form.get('mode') == 'market' %} selected{% endif %}>Market</option>
+                                    <option value="limit"{% if request.form.get('act') == 'buy' and request.form.get('mode') == 'limit' %} selected{% endif %}>Limit</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="buy-price">Price</label>
+                                <input name="price" id="buy-price" class="input-block" value="{% if request.form.get('act') == 'buy' %}{{ request.form.get('price', 0) }}{% else %}0{% endif %}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <button type="submit" class="btn-block btn-warning">Buy</button>
+                            </div>
+                        </div>
+                    </div>
+                    <input name="act" type="hidden" value="buy"/>
+                    <input name="csrf_token" type="hidden" value="{{ csrf_token }}"/>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     function update_statistics() {
         $("#balances").load('{{ url_for('terminal.balance', account_id=current_account.account_id) }}');
-        $("#open_orders").load('{{ url_for('terminal.orders', account_id=current_account.account_id, symbol=current_symbol) }}');
+        $("#open-orders").load('{{ url_for('terminal.orders', account_id=current_account.account_id, symbol=current_symbol) }}');
     }
     update_statistics();
     window.setInterval(update_statistics, {{ update_interval }});

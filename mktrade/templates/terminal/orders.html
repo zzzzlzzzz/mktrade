@@ -1,34 +1,28 @@
-    <div style="display:table-row;width:auto;">
-        <div style="float:left;display:table-column;margin-right: 10px;">
-            Side
-        </div>
-        <div style="float:left;display:table-column;margin-right: 10px;">
-            Price
-        </div>
-        <div style="float:left;display:table-column;margin-right: 10px;">
-            Amount
-        </div>
-        <div style="float:left;display:table-column;margin-right: 10px;">
-            Cancel
-        </div>
-    </div>
-{% for order in open_orders %}
-    <div style="display:table-row;width:auto;">
-        <div style="float:left;display:table-column;margin-right: 10px;">
-            {{ order['side'] }}
-        </div>
-        <div style="float:left;display:table-column;margin-right: 10px;">
-            {{ order['price'] }}
-        </div>
-        <div style="float:left;display:table-column;margin-right: 10px;">
-            {{ order['amount'] }}
-        </div>
-        <div style="float:left;display:table-column;margin-right: 10px;">
-            <form method="post" action="{{ url_for('terminal.cancel', account_id=current_account.account_id, symbol=current_symbol) }}">
-                <input type="hidden" name="order_id" value="{{ order['id'] }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}"/>
-                <input type="submit" value="X"/>
-            </form>
-        </div>
-    </div>
-{% endfor %}
+<table class="table-hover">
+    <thead>
+        <tr>
+            <th>Order ID</th>
+            <th>Side</th>
+            <th>Price</th>
+            <th>Amount</th>
+            <th>Cancel</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for order in open_orders %}
+        <tr>
+            <td>{{ order['id'] }}</td>
+            <td>{{ order['side'] }}</td>
+            <td>{{ order['price'] }}</td>
+            <td>{{ order['amount'] }}</td>
+            <td>
+                <form method="post" action="{{ url_for('terminal.cancel', account_id=current_account.account_id, symbol=current_symbol) }}">
+                    <button type="submit" class="btn-warning btn-block">Cancel</button>
+                    <input type="hidden" name="order_id" value="{{ order['id'] }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}"/>
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>

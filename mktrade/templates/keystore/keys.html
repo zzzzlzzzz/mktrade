@@ -1,53 +1,110 @@
 {% extends "base.html" %}
 
-{% block title %}Keys{% endblock %}
+{% set title = "KeyStore" %}
+{% set active_page = "keystore" %}
 
 {% block content %}
+<div class="row">
+    <div class="col-3"></div>
+    <div class="col-6">
+        <div class="row">
+            <div class="col sm-6">
+                <div class="form-group">
+                    <select onchange="select_as_link(this.value);" class="input-block">
+                        <option value="{{ url_for('keystore.keys') }}"{% if not current_account %} selected{% endif %}>New</option>
+                        {% for account in accounts %}
+                        <option value="{{ url_for('keystore.keys_by_id', key_id=account.account_id) }}" {% if current_account and current_account.account_id == account.account_id %} selected{% endif %}>{{ account.account_id }} - {{ account.account_tag }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col sm-6">
+                {% if current_account %}
+                <form method="post">
+                    <input name="act" type="hidden" value="del">
+                    <input name="csrf_token" type="hidden" value="{{ csrf_token }}">
+                    <div class="form-group">
+                        <button type="submit" class="btn-block">Delete</button>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
 
-<script>
-    function account_change(val) {
-        if(val) {
-            window.location.href = val;
-        }
-    }
-</script>
-
-<select onchange="account_change(this.value);">
-    <option value="{{ url_for('keystore.keys') }}"{% if not current_account %} selected{% endif %}>New</option>
-    {% for account in accounts %}
-    <option value="{{ url_for('keystore.keys_by_id', key_id=account.account_id) }}" {% if current_account and current_account.account_id == account.account_id %} selected{% endif %}>{{ account.account_id }} - {{ account.account_tag }}</option>
-    {% endfor %}
-</select>
-
-<form method="post" action="{% if not current_account %}{{ url_for('keystore.keys') }}{% else %}{{ url_for('keystore.keys_by_id', key_id=current_account.account_id) }}{% endif %}">
-    Tag:
-    <input name="tag" type="text" required value="{% if current_account %}{{ current_account.account_tag }}{% endif %}"/>
-    Exchange:
-    <select name="exchange">
-        {% for exchange in exchanges %}
-        <option value="{{ exchange }}"{% if current_account and current_account.exchange_id == exchange %} selected{% endif %}>{{ exchange }}</option>
-        {% endfor %}
-    </select>
-    Api key:
-    <input name="api_key" type="text" required value="{% if current_account %}{{ current_account.api_key }}{% endif %}"/>
-    Api secret:
-    <input name="api_secret" type="text" required value="{% if current_account %}{{ current_account.api_secret }}{% endif %}"/>
-    UID:
-    <input name="uid" type="text" value="{% if current_account %}{{ current_account.uid }}{% endif %}"/>
-    Password:
-    <input name="pass" type="text" value="{% if current_account %}{{ current_account.password }}{% endif %}"/>
-    Timeout:
-    <input name="timeout" type="text" value="{% if current_account %}{{ current_account.exchange_timeout }}{% else %}10000{% endif %}"/>
-    <input name="nonce_as_time" type="checkbox"{% if current_account and current_account.nonce_as_time%} checked{% endif %}/> Nonce as time
-    <input name="act" type="hidden" value="add">
-    <input name="csrf_token" type="hidden" value="{{ csrf_token }}"/>
-    <input type="submit" value="Save"/>
-</form>
-{% if current_account %}
-<form method="post">
-    <input name="act" type="hidden" value="del">
-    <input name="csrf_token" type="hidden" value="{{ csrf_token }}">
-    <input type="submit" value="Delete"/>
-</form>
-{% endif %}
+        <form method="post" action="{% if not current_account %}{{ url_for('keystore.keys') }}{% else %}{{ url_for('keystore.keys_by_id', key_id=current_account.account_id) }}{% endif %}">
+            <div class="row">
+                <div class="col sm-6">
+                    <div class="form-group">
+                        <label for="account-tag">Tag</label>
+                        <input name="tag" class="input-block" type="text" id="account-tag" required value="{% if current_account %}{{ current_account.account_tag }}{% endif %}"/>
+                    </div>
+                </div>
+                <div class="col sm-6">
+                    <div class="form-group">
+                        <label for="account-exchange">Exchange</label>
+                        <select name="exchange" class="input-block" id="account-exchange">
+                            {% for exchange in exchanges %}
+                            <option value="{{ exchange }}"{% if current_account and current_account.exchange_id == exchange %} selected{% endif %}>{{ exchange }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col sm-12">
+                    <div class="form-group">
+                        <label for="account-api-key">Api key</label>
+                        <input name="api_key" class="input-block" id="account-api-key" type="text" required value="{% if current_account %}{{ current_account.api_key }}{% endif %}"/>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col sm-12">
+                    <div class="form-group">
+                        <label for="account-api-secret">Api secret</label>
+                        <input name="api_secret" class="input-block" id="account-api-secret" type="text" required value="{% if current_account %}{{ current_account.api_secret }}{% endif %}"/>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col sm-6">
+                    <div class="form-group">
+                        <label for="account-uid">UID</label>
+                        <input name="uid" class="input-block" id="account-uid" type="text" value="{% if current_account %}{{ current_account.uid }}{% endif %}"/>
+                    </div>
+                </div>
+                <div class="col sm-6">
+                    <div class="form-group">
+                        <label for="account-password">Password</label>
+                        <input name="pass" class="input-block" id="account-password" type="text" value="{% if current_account %}{{ current_account.password }}{% endif %}"/>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col sm-6">
+                    <div class="form-group">
+                        <label for="account-timeout">Timeout</label>
+                        <input name="timeout" class="input-block" id="account-timeout" type="text" value="{% if current_account %}{{ current_account.exchange_timeout }}{% else %}10000{% endif %}"/>
+                    </div>
+                </div>
+                <div class="col sm-6">
+                    <div class="form-group">
+                        <label for="account-nonce-as-time" class="paper-check">
+                            <input name="nonce_as_time" id="account-nonce-as-time" type="checkbox"{% if current_account and current_account.nonce_as_time%} checked{% endif %}/>
+                            <span>Nonce as time</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <input name="act" type="hidden" value="add">
+            <input name="csrf_token" type="hidden" value="{{ csrf_token }}"/>
+            <div class="row">
+                <div class="col sm-12">
+                    <button type="submit" class="btn-block">Save</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="col-3"></div>
+</div>
 {% endblock %}

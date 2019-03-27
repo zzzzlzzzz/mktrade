@@ -1,20 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{% block title %}{% endblock %}</title>
-    <script type=text/javascript src="{{ url_for('static', filename='jquery-3.3.1.min.js') }}"></script>
-</head>
-<body>
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <ul>
-            {% for message in messages %}
-                <li>{{ message }}</li>
-            {% endfor %}
-            </ul>
-        {% endif %}
-    {% endwith %}
-    {% block content %}{% endblock %}
-</body>
+    <head>
+        <meta name="robots" content="index, follow" />
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=7">
+        <meta name="language" content="en-EN" />
+        <title>{{ title }} - mkTrade</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='dist/paper.min.css') }}"/>
+        <link rel="stylesheet" href="{{ url_for('static', filename='dist/font-awesome.min.css') }}"/>
+        <link rel="stylesheet" href="{{ url_for('static', filename='dist/main.css') }}"/>
+        <script type=text/javascript src="{{ url_for('static', filename='dist/jquery-3.3.1.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    </head>
+    <body>
+        <header class="header shadow">
+            <div class="brand">mkTrade</div>
+            <div class="menu">
+                <nav class="menu-bar">
+                    <a href="{{ url_for('terminal.index') }}" class="menu-item{% if active_page == "terminal" %} menu--active{% endif %}">Terminal</a>
+                    <a href="{{ url_for('keystore.keys') }}" class="menu-item{% if active_page == "keystore" %} menu--active{% endif %}">KeyStore</a>
+                    <a href="{{ url_for('keystore.auth') }}" class="menu-item{% if active_page == "auth" %} menu--active{% endif %}">Auth</a>
+                </nav>
+            </div>
+        </header>
+        <main class="row">
+            <article class="col-12 col main">
+                <div id="error-panel">
+                    {% for message in get_flashed_messages() %}
+                    <div class="alert alert-danger">
+                        <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% block content %}{% endblock %}
+            </article>
+        </main>
+    </body>
 </html>

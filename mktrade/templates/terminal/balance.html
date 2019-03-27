@@ -1,3 +1,16 @@
-{% for name, amount in balances.items() %}
-    {{ name }}: {{ amount }}<br/>
-{% endfor %}
+<table class="table-hover">
+    <thead>
+        <tr>
+            <th>Symbol</th>
+            <th>Amount</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for name, amount in balances.items() %}
+        <tr>
+            <td>{{ name }}</td>
+            <td>{{ amount }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
